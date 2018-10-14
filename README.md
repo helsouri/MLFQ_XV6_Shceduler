@@ -4,7 +4,6 @@ changing xv6-schduler to MLFQ
 using this github project as a reference and help: <br>
 https://github.com/shreyakamath2311/Xv6-MLFQ-Scheduler <br> <br>
 
-[**MAKE SURE YOU PROPERLY CITE YOUR MATERIAL I CAN GET INTO A LOT OF TROUBLE FOR SHARING THIS**]
 
 Edited proc.h as such that i added definitions for the queues and their counters.<br>
 I also added a structer for the statistics and variables for clicks and priority <br>
@@ -17,4 +16,5 @@ Made many changes to proc.c especially in the scheduler section. <br><br>
 
 I must say that this is not perfect but it works very well <br>
 Missing the option of checking back from Q1 always will add more print commands to debugg<br>
-use : $host.UI.RawUI.WindowTitle = "New Title" to chnage power shell title
+use : $host.UI.RawUI.WindowTitle = "New Title" to chnage power shell title <br>
+edited proc.c to include a few more print commands <br>
