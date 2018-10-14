@@ -68,7 +68,6 @@ extern int c6;
 
 //finally a struct for keeping tract of process statistics
 extern struct pstat pstat_var;
-// end of edits
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
