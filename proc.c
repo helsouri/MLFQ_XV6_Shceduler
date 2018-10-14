@@ -311,6 +311,53 @@ wait(void)
   }
 }
 
+// added code
+
+				void
+addToRear (struct proc **q, struct proc* p, int *c)
+{
+				*q[*c] =*p;
+				(*c)++;
+}
+
+				void
+addToFront (int *q, int pid, int *c)
+{
+				//TODO if more than 64 process;
+				int i;
+				for (i = *c; i > 0; i++)
+				{
+								q[i] = q[i - 1];
+				}
+				q[0] = pid;
+				(*c)++;
+}
+
+				struct proc *
+nextReady (int *q, int *c)
+{
+				cprintf("entering nextReady method  c-- %d q[0] %d \n",*c,q[0]);
+				struct proc *p = NULL;
+				int pid;
+				int i;
+				for (i = 0; i < *c; i++)
+				{
+								cprintf("inside for loop *c---%d \n",*c);
+								pid = q[i];
+								for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+								{
+												cprintf ("in the for loop before if ");
+												if (p->pid == pid && p->state == RUNNABLE)
+												{
+																cprintf ("runnable process %d", p->pid);
+																return p;
+												}
+								}
+				}
+				cprintf ("runnable NULL");
+				return p;
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
