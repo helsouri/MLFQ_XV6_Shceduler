@@ -17,3 +17,4 @@ Made many changes to proc.c especially in the scheduler section. <br><br>
 
 I must say that this is not perfect but it works very well <br>
 Missing the option of checking back from Q1 always will add more print commands to debugg<br>
+use : $host.UI.RawUI.WindowTitle = "New Title" to chnage power shell title
