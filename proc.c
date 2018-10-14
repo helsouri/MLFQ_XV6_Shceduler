@@ -411,7 +411,8 @@ scheduler (void)
                     proc = 0;
             }
     }
-    if(c2!=-1) //we basically repeat what we did for c0 for all
+    // we basically do the same for the rest of the queues
+    if(c2!=-1) //Queue 2
     {
         for(i=0;i<=c2;i++)
             {
@@ -445,7 +446,7 @@ scheduler (void)
                     proc = 0;
 								}
     }
-    if(c3!=-1)
+    if(c3!=-1)      //queue 3
     {
             for(i=0;i<=c3;i++)
                 {
@@ -461,7 +462,7 @@ scheduler (void)
                     pstat_var.ticks[p->pid][2]=p->clicks;;
                     if(p->clicks ==clkPerPrio[2])
                         {
-                            cprintf("Process %d ran for %d clicks in Q3 and will be moved to Q4/n",p->pid, p->clicks);
+                            cprintf("Process %d ran for %d clicks in Q3 and will be moved to Q4\n",p->pid, p->clicks);
                             /*copy proc to lower priority queue*/
                             c4++;
                             proc->priority=proc->priority+1;
@@ -474,12 +475,12 @@ scheduler (void)
                             q3[c3] =NULL;
                             proc->clicks = 0;
                             c3--;
-                            cprintf("Process successfully moved and is deleted from Q3/n");
+                            cprintf("Process successfully moved and is deleted from Q3\n");
                         }
                         proc = 0;
             }
     }
-    if(c4!=-1)
+    if(c4!=-1)      // queue 4
     {
         for(i=0;i<=c4;i++)
             {
@@ -495,7 +496,7 @@ scheduler (void)
                 pstat_var.ticks[p->pid][3]=p->clicks;;
                 if(p->clicks ==clkPerPrio[3])
                 {
-                    cprintf("Process %d ran for %d clicks in Q4 and will be moved to Q5/n",p->pid, p->clicks);
+                    cprintf("Process %d ran for %d clicks in Q4 and will be moved to Q5\n",p->pid, p->clicks);
                     /*copy proc to lower priority queue*/
                     c5++;
                     proc->priority=proc->priority+1;
@@ -508,12 +509,12 @@ scheduler (void)
                     q4[c4] =NULL;
                     proc->clicks = 0;
                     c4--;
-                    cprintf("Process successfully moved and is deleted from Q4/n");
+                    cprintf("Process successfully moved and is deleted from Q4\n");
                 }
                 proc = 0;
             }
     }
-    if(c5!=-1)
+    if(c5!=-1)      // queue 5
     {
         for(i=0;i<=c5;i++)
                 {
@@ -529,7 +530,7 @@ scheduler (void)
                     pstat_var.ticks[p->pid][4]=p->clicks;;
                     if(p->clicks ==clkPerPrio[4])
                         {
-                            cprintf("Process %d ran for %d clicks in Q5 and will be moved to Q6/n",p->pid, p->clicks);
+                            cprintf("Process %d ran for %d clicks in Q5 and will be moved to Q6\n",p->pid, p->clicks);
                             /*copy proc to lower priority queue*/
                             c6++;
                             proc->priority=proc->priority+1;
@@ -542,12 +543,12 @@ scheduler (void)
                             q5[c5] =NULL;
                             proc->clicks = 0;
                             c5--;
-                            cprintf("Process successfully moved and is deleted from Q5/n");
+                            cprintf("Process successfully moved and is deleted from Q5\n");
                         }
                         proc = 0;
             }
     }
-    if(c6!=-1)
+    if(c6!=-1)          // last queue
     {
         for(i=0;i<=c6;i++)
                 {
@@ -561,7 +562,7 @@ scheduler (void)
                     swtch(&cpu->scheduler, proc->context);
                     switchkvm();
                     pstat_var.ticks[p->pid][5]=p->clicks;;
-                    cprintf("Moving process %d to the end of its on queue\n")
+                    cprintf("Moving process %d to the end of its on queue\n");
                     /*move process to end of its own queue */
                     if(p->clicks==2*clkPerPrio[5])
                     {
@@ -582,12 +583,10 @@ scheduler (void)
                     proc = 0;
 
                 }
+
+    }
         release(&ptable.lock);
     }
-
-
-
-
 }
 
 
