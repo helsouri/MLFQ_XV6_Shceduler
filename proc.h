@@ -49,6 +49,15 @@ struct context {
   uint eip;
 };
 
+//edits
+// first defining queues
+extern struct proc* q1[64];
+extern struct proc* q2[64];
+extern struct proc* q3[64];
+extern struct proc* q4[64];
+extern struct proc* q5[64];
+extern struct proc* q6[64];
+
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
