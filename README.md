@@ -9,4 +9,4 @@ Edited proc.h as such: <br>
 2) Added counters for the queues <br>
 3) Added a structer for the statistics {Check pstat.h file we will make later } <br>
 4) Added variables for clicks and priority
-<br><br> Added pstat.h header file that simply contains a structure to keep track of process statistics <br>
+<br><br>Added pstat.h header file that simply contains a structure to keep track of process statistics <br>
