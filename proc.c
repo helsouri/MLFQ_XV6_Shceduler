@@ -8,6 +8,15 @@
 #include "spinlock.h"
 #include "pstat.h"
 
+// queues initiation
+struct proc* q1[64];
+struct proc* q2[64];
+struct proc* q3[64];
+struct proc* q4[64];
+struct proc* q5[64];
+struct proc* q6[64];
+
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
