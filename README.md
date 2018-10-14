@@ -15,3 +15,4 @@ Added pstat.h header file that simply contains a structure to keep track of proc
 Defined new header file that now contains the system call declarations {check sysfunc.h} <br>
 This is so that the compiler will catch newly defined system call function <br>
 Added new system call to get process info <br>
+Added Sysfile.c where i added the new defines and a function for getting process info <br>
