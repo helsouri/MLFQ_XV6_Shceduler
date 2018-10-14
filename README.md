@@ -10,7 +10,7 @@ Edited proc.h as such: <br>
 3) Added a structer for the statistics <br>
 4) Added variables for clicks and priority <br><br>
 
-Added pstat.h header file that simply contains a structure to keep track of process statistics <br> <br>
-
+Added pstat.h header file that simply contains a structure to keep track of process statistics <br>
 Defined new header file that now contains the system call declarations {check sysfunc.h} <br>
-This is so that the compiler will catch newly defined system call function <br>
+This is so that the compiler will catch newly defined system call function <br> 
+Edited sysfile.c to include the function for getting information about a process <br>
