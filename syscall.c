@@ -7,7 +7,7 @@
 #include "x86.h"
 #include "syscall.h"
 #include "sysfunc.h"    // included new header fall for system calls
-#include "pstat.h"
+#include "pstat.h"      // included this new header file
 
 // User code makes a system call with INT T_SYSCALL.
 // System call number in %eax.
@@ -15,7 +15,7 @@
 // library system call function. The saved user %esp points
 // to a saved program counter, and then the first argument.
 
-// Fetch the int at addr from the current process.
+// Fetch the int at addr from the current process
 int
 fetchint(uint addr, int *ip)
 {
@@ -57,7 +57,7 @@ int
 argptr(int n, char **pp, int size)
 {
   int i;
-  
+
   if(argint(n, &i) < 0)
     return -1;
   if((uint)i >= proc->sz || (uint)i+size > proc->sz)
@@ -105,7 +105,6 @@ static int (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_getpinfo] sys_getpinfo,
-  
 };
 
 void
