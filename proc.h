@@ -58,6 +58,15 @@ extern struct proc* q4[64];
 extern struct proc* q5[64];
 extern struct proc* q6[64];
 
+//then their counters
+extern int c1;
+extern int c2;
+extern int c3;
+extern int c4;
+extern int c5;
+extern int c6;
+
+
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
