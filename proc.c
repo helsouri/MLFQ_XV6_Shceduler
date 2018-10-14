@@ -6,7 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
-#include "pstat.h"
+#include "pstat.h"          //added header files
 
 // queues initiation
 struct proc* q1[64];
@@ -64,15 +64,12 @@ allocproc(void)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == UNUSED)
       goto found;
-  
-  release(&ptable.lock);
-  return 0;
-  
+
   // added code
-  p->priority = 0;                              // set priority
+  p->priority = 1;                              // set priority
   p->clicks = 0;                                // set clicks
-  c0++;                                         // increase counter
-  q0[c0] = p;                                   // assign process to current queue
+  c1++;                                         // increase counter
+  q1[c1] = p;                                   // assign process to current queue
   pstat_var.inuse[p->pid] = 1;                  // set to be in use
   pstat_var.priority[p->pid] = p->priority;     //set priority
   pstat_var.ticks[p->pid][0] = 0;               // set ticks for this process to be 0 in this queues
@@ -83,16 +80,19 @@ allocproc(void)
   pstat_var.ticks[p->pid][5] = 0;               // set ticks for this process to be 0 in this queues
   pstat_var.pid[p->pid] = p->pid;               // set process id
   // end of added code
-  
+
+  release(&ptable.lock);
+  return 0;
+
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  
+
   // added code
   p->priority = 0;                              // set priority
   p->clicks = 0;                                // set clicks
-  c0++;                                         // increase counter
-  q0[c0] = p;                                   // assign process to current queue
+  c1++;                                         // increase counter
+  q1[c1] = p;                                   // assign process to current queue
   pstat_var.inuse[p->pid] = 1;                  // set to be in use
   pstat_var.priority[p->pid] = p->priority;     //set priority
   pstat_var.ticks[p->pid][0] = 0;               // set ticks for this process to be 0 in this queues
@@ -103,7 +103,7 @@ found:
   pstat_var.ticks[p->pid][5] = 0;               // set ticks for this process to be 0 in this queues
   pstat_var.pid[p->pid] = p->pid;               // set process id
   // end of added code
-  
+
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -112,11 +112,11 @@ found:
     return 0;
   }
   sp = p->kstack + KSTACKSIZE;
-  
+
   // Leave room for trap frame.
   sp -= sizeof *p->tf;
   p->tf = (struct trapframe*)sp;
-  
+
   // Set up new context to start executing at forkret,
   // which returns to trapret.
   sp -= 4;
@@ -137,7 +137,7 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
-  
+
   p = allocproc();
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
@@ -165,7 +165,7 @@ int
 growproc(int n)
 {
   uint sz;
-  
+
   sz = proc->sz;
   if(n > 0){
     if((sz = allocuvm(proc->pgdir, sz, sz + n)) == 0)
@@ -212,14 +212,14 @@ fork(void)
   np->cwd = idup(proc->cwd);
 
   safestrcpy(np->name, proc->name, sizeof(proc->name));
- 
+
   pid = np->pid;
 
   // lock to force the compiler to emit the np->state write last.
   acquire(&ptable.lock);
   np->state = RUNNABLE;
   release(&ptable.lock);
-  
+
   return pid;
 }
 
@@ -346,15 +346,15 @@ nextReady (int *q, int *c)
 								pid = q[i];
 								for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
 								{
-												cprintf ("in the for loop before if ");
+												cprintf ("in the for loop before if\n ");
 												if (p->pid == pid && p->state == RUNNABLE)
 												{
-																cprintf ("runnable process %d", p->pid);
+																cprintf ("runnable process %d\n", p->pid);
 																return p;
 												}
 								}
 				}
-				cprintf ("runnable NULL");
+				cprintf ("runnable NULL\n");
 				return p;
 }
 
@@ -367,37 +367,229 @@ nextReady (int *q, int *c)
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 void
-scheduler(void)
+scheduler (void)
 {
-  struct proc *p;
-
-  for(;;){
+    struct proc *p;
+    int i;
+    int j;
+    for(;;){
     // Enable interrupts on this processor.
     sti();
-
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
-
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-      swtch(&cpu->scheduler, proc->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      proc = 0;
+    if(c1!=-1) // if there is a process
+    {
+        for(i=0;i<=c1;i++)  //for a loop till that process
+            {
+                if(q1[i]->state != RUNNABLE) //if process is runnable
+                continue;
+                p=q1[i];  // get process from queue
+                proc = q1[i];       //assign it
+                p->clicks++;        //increase clicks
+                switchuvm(p);       // switch to memory
+                p->state = RUNNING; //mark running
+                swtch(&cpu->scheduler, proc->context); // switch context
+                switchkvm(); //switch to kernel
+                pstat_var.ticks[p->pid][0]=p->clicks; //assign ticks
+                if(p->clicks ==clkPerPrio[0])           //if ran for pre assign clicks
+                    {
+                        cprintf("Process %d ran for %d clicks in Q1 and will be moved to Q2\n",p->pid, p->clicks);
+                        //copy proc to lower priority queue
+                        c2++;
+                        proc->priority=proc->priority+1;
+                        pstat_var.priority[proc->pid] = proc->priority;
+                        q2[c2] = proc;
+                        //delete proc from
+                        q1[i]=NULL;
+                        for(j=i;j<=c1-1;j++)
+                            q1[j] = q1[j+1];
+                        q1[c1] = NULL;
+                        proc->clicks = 0;
+                        c1--; //decreament counter
+                        cprintf("Process successfully moved and is deleted from Q1\n");
+                    }
+                    proc = 0;
+            }
     }
-    release(&ptable.lock);
+    if(c2!=-1) //we basically repeat what we did for c0 for all
+    {
+        for(i=0;i<=c2;i++)
+            {
+                if(q2[i]->state != RUNNABLE)
+                continue;
+                p=q2[i];
+                proc = q2[i];
+                proc->clicks++;
+                switchuvm(p);
+                p->state = RUNNING;
+                swtch(&cpu->scheduler, proc->context);
+                switchkvm();
+                pstat_var.ticks[p->pid][1]=p->clicks;;
+                if(p->clicks ==clkPerPrio[1])
+                    {
+                        cprintf("Process %d ran for %d clicks in Q2 and will be moved to Q3\n",p->pid, p->clicks);
+                        /*copy proc to lower priority queue*/
+                        c3++;
+                        proc->priority=proc->priority+1;
+                        pstat_var.priority[proc->pid] = proc->priority;
+                        q3[c3] = proc;
+                        /*delete proc from q1*/
+                        q2[i]=NULL;
+                        for(j=i;j<=c2-1;j++)
+                            q2[j] = q2[j+1];
+                        q2[c2] = NULL;
+                        proc->clicks = 0;
+                        c2--;
+                        cprintf("Process successfully moved and is deleted from Q2\n");
+                    }
+                    proc = 0;
+								}
+    }
+    if(c3!=-1)
+    {
+            for(i=0;i<=c3;i++)
+                {
+                    if(q3[i]->state != RUNNABLE)
+                    continue;
+                    p=q3[i];
+                    proc = q3[i];
+                    proc->clicks++;
+                    switchuvm(p);
+                    p->state = RUNNING;
+                    swtch(&cpu->scheduler, proc->context);
+                    switchkvm();
+                    pstat_var.ticks[p->pid][2]=p->clicks;;
+                    if(p->clicks ==clkPerPrio[2])
+                        {
+                            cprintf("Process %d ran for %d clicks in Q3 and will be moved to Q4/n",p->pid, p->clicks);
+                            /*copy proc to lower priority queue*/
+                            c4++;
+                            proc->priority=proc->priority+1;
+                            pstat_var.priority[p->pid] = p->priority;
+                            q4[c4] = proc;
+                            /*delete proc from q3*/
+                            q3[i]=NULL;
+                            for(j=i;j<=c3-1;j++)
+                                q3[j] = q3[j+1];
+                            q3[c3] =NULL;
+                            proc->clicks = 0;
+                            c3--;
+                            cprintf("Process successfully moved and is deleted from Q3/n");
+                        }
+                        proc = 0;
+            }
+    }
+    if(c4!=-1)
+    {
+        for(i=0;i<=c4;i++)
+            {
+                if(q4[i]->state != RUNNABLE)
+                continue;
+                p=q4[i];
+                proc = q4[i];
+                proc->clicks++;
+                switchuvm(p);
+                p->state = RUNNING;
+                swtch(&cpu->scheduler, proc->context);
+                switchkvm();
+                pstat_var.ticks[p->pid][3]=p->clicks;;
+                if(p->clicks ==clkPerPrio[3])
+                {
+                    cprintf("Process %d ran for %d clicks in Q4 and will be moved to Q5/n",p->pid, p->clicks);
+                    /*copy proc to lower priority queue*/
+                    c5++;
+                    proc->priority=proc->priority+1;
+                    pstat_var.priority[p->pid] = p->priority;
+                    q5[c5] = proc;
+                    /*delete proc from q0*/
+                    q4[i]=NULL;
+                    for(j=i;j<=c4-1;j++)
+                        q4[j] = q4[j+1];
+                    q4[c4] =NULL;
+                    proc->clicks = 0;
+                    c4--;
+                    cprintf("Process successfully moved and is deleted from Q4/n");
+                }
+                proc = 0;
+            }
+    }
+    if(c5!=-1)
+    {
+        for(i=0;i<=c5;i++)
+                {
+                    if(q5[i]->state != RUNNABLE)
+                    continue;
+                    p=q5[i];
+                    proc = q5[i];
+                    proc->clicks++;
+                    switchuvm(p);
+                    p->state = RUNNING;
+                    swtch(&cpu->scheduler, proc->context);
+                    switchkvm();
+                    pstat_var.ticks[p->pid][4]=p->clicks;;
+                    if(p->clicks ==clkPerPrio[4])
+                        {
+                            cprintf("Process %d ran for %d clicks in Q5 and will be moved to Q6/n",p->pid, p->clicks);
+                            /*copy proc to lower priority queue*/
+                            c6++;
+                            proc->priority=proc->priority+1;
+                            pstat_var.priority[p->pid] = p->priority;
+                            q6[c6] = proc;
+                            /*delete proc from q0*/
+                            q5[i]=NULL;
+                            for(j=i;j<=c5-1;j++)
+                                q5[j] = q5[j+1];
+                            q5[c5] =NULL;
+                            proc->clicks = 0;
+                            c5--;
+                            cprintf("Process successfully moved and is deleted from Q5/n");
+                        }
+                        proc = 0;
+            }
+    }
+    if(c6!=-1)
+    {
+        for(i=0;i<=c6;i++)
+                {
+                    if(q6[i]->state != RUNNABLE)
+                    continue;
+                    p=q6[i];
+                    proc = q6[i];
+                    proc->clicks++;
+                    switchuvm(p);
+                    p->state = RUNNING;
+                    swtch(&cpu->scheduler, proc->context);
+                    switchkvm();
+                    pstat_var.ticks[p->pid][5]=p->clicks;;
+                    cprintf("Moving process %d to the end of its on queue\n")
+                    /*move process to end of its own queue */
+                    if(p->clicks==2*clkPerPrio[5])
+                    {
+                        cprintf("Process %d ran for %d clicks in Q6 and will be moved back to Q1/n",p->pid, p->clicks);
+                        /*copy proc to highest priority queue*/
+                        c1++;
+                        proc->priority=1;
+                        pstat_var.priority[p->pid] = p->priority;;
+                        q1[c1] = proc;
+                        // remove proc from q6
+                        q6[i]=NULL;
+                        for(j=i;j<=c6-1;j++)
+                            q6[j] = q6[j+1];
+                        q6[c6] = NULL;
+                        proc->clicks = 0;
+                        c6--;
+                    }
+                    proc = 0;
 
-  }
+                }
+        release(&ptable.lock);
+    }
+
+
+
+
 }
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state.
@@ -440,13 +632,13 @@ forkret(void)
 
   if (first) {
     // Some initialization functions must be run in the context
-    // of a regular process (e.g., they call sleep), and thus cannot 
+    // of a regular process (e.g., they call sleep), and thus cannot
     // be run from main().
     first = 0;
     iinit(ROOTDEV);
     initlog(ROOTDEV);
   }
-  
+
   // Return to "caller", actually trapret (see allocproc).
 }
 
@@ -551,7 +743,7 @@ procdump(void)
   struct proc *p;
   char *state;
   uint pc[10];
-  
+
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state == UNUSED)
       continue;
