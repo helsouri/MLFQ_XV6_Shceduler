@@ -442,3 +442,21 @@ sys_pipe(void)
   fd[1] = fd1;
   return 0;
 }
+
+int sys_getpinfo(void) {
+	int i,j;
+	struct pstat *st;
+	if(argptr(0, (void*)&st, sizeof(*st))<0)
+				return -1;
+
+	for(i=0;i<64;i++){
+		st->inuse[i] = pstat_var.inuse[i];
+		st->pid[i] = pstat_var.pid[i];
+		st->priority[i] = pstat_var.priority[i];
+		for(j=0;j<6;j++){
+					st->ticks[i][j] =pstat_var.ticks[i][j] ;
+		}
+	}
+
+	return 0;
+}
