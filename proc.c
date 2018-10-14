@@ -16,6 +16,13 @@ struct proc* q4[64];
 struct proc* q5[64];
 struct proc* q6[64];
 
+// initiating their counters
+int c1=-1;
+int c2=-1;
+int c3=-1;
+int c4=-1;
+int c5=-1;
+int c6=-1;
 
 struct {
   struct spinlock lock;
