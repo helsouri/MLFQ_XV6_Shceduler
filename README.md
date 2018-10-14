@@ -14,4 +14,4 @@ More edits to user.h and usys.S to implement newly created function/system call 
 Made many changes to proc.c especially in the scheduler section. <br><br>
 
 I must say that this is not perfect but it works very well <br>
-The only error is slightly in queue 6 i suspect in the if <br>
+The only error is slightly in queue 6 i suspect in the if condition <br>
