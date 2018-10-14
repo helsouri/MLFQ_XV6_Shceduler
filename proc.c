@@ -87,6 +87,23 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  
+  // added code
+  p->priority = 0;                              // set priority
+  p->clicks = 0;                                // set clicks
+  c0++;                                         // increase counter
+  q0[c0] = p;                                   // assign process to current queue
+  pstat_var.inuse[p->pid] = 1;                  // set to be in use
+  pstat_var.priority[p->pid] = p->priority;     //set priority
+  pstat_var.ticks[p->pid][0] = 0;               // set ticks for this process to be 0 in this queues
+  pstat_var.ticks[p->pid][1] = 0;               // set ticks for this process to be 0 in this queues
+  pstat_var.ticks[p->pid][2] = 0;               // set ticks for this process to be 0 in this queues
+  pstat_var.ticks[p->pid][3] = 0;               // set ticks for this process to be 0 in this queues
+  pstat_var.ticks[p->pid][4] = 0;               // set ticks for this process to be 0 in this queues
+  pstat_var.ticks[p->pid][5] = 0;               // set ticks for this process to be 0 in this queues
+  pstat_var.pid[p->pid] = p->pid;               // set process id
+  // end of added code
+  
   release(&ptable.lock);
 
   // Allocate kernel stack.
