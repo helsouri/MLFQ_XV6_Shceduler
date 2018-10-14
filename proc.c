@@ -372,26 +372,35 @@ scheduler (void)
     struct proc *p;
     int i;
     int j;
-    for(;;){
+    for(;;)
+        {
     // Enable interrupts on this processor.
     sti();
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+    //for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+        //{
     if(c1!=-1) // if there is a process
     {
-        for(i=0;i<=c1;i++)  //for a loop till that process
-            {
-                if(q1[i]->state != RUNNABLE) //if process is runnable
-                continue;
-                p=q1[i];  // get process from queue
-                proc = q1[i];       //assign it
-                p->clicks++;        //increase clicks
-                switchuvm(p);       // switch to memory
-                p->state = RUNNING; //mark running
-                swtch(&cpu->scheduler, proc->context); // switch context
-                switchkvm(); //switch to kernel
-                pstat_var.ticks[p->pid][0]=p->clicks; //assign ticks
-                if(p->clicks ==clkPerPrio[0])           //if ran for pre assign clicks
+                cprintf("The value of C1 is: %d\n", c1);
+                for(i=0;i<=c1;i++)  //for a loop till that process
+                {
+                    if(q1[i]->state != RUNNABLE)
+                    {//if process is not runnable
+                        cprintf("Didn't find a runnable process in Q1\n");
+                        cprintf("Will check in Q2\n The command next is continue and it should check in Q2\n");
+                        continue;
+                    }
+
+                    p=q1[i];        // get process from queue
+                    proc = q1[i];       //assign it
+                    p->clicks++;        //increase clicks
+                    switchuvm(p);       // switch to memory
+                    p->state = RUNNING; //mark running
+                    swtch(&cpu->scheduler, proc->context); // switch context
+                    switchkvm(); //switch to kernel
+                    pstat_var.ticks[p->pid][0]=p->clicks; //assign ticks
+                    if(p->clicks ==clkPerPrio[0])           //if ran for pre assign clicks
                     {
                         cprintf("Process %d ran for %d clicks in Q1 and will be moved to Q2\n",p->pid, p->clicks);
                         //copy proc to lower priority queue
@@ -406,27 +415,34 @@ scheduler (void)
                         q1[c1] = NULL;
                         proc->clicks = 0;
                         c1--; //decreament counter
+                        cprintf("c1 is  now: %d\n", c1);
                         cprintf("Process successfully moved and is deleted from Q1\n");
                     }
                     proc = 0;
+                }
             }
-    }
-    // we basically do the same for the rest of the queues
+            // we basically do the same for the rest of the queues
+            //tag_queue2:
     if(c2!=-1) //Queue 2
     {
-        for(i=0;i<=c2;i++)
-            {
-                if(q2[i]->state != RUNNABLE)
-                continue;
-                p=q2[i];
-                proc = q2[i];
-                proc->clicks++;
-                switchuvm(p);
-                p->state = RUNNING;
-                swtch(&cpu->scheduler, proc->context);
-                switchkvm();
-                pstat_var.ticks[p->pid][1]=p->clicks;;
-                if(p->clicks ==clkPerPrio[1])
+                cprintf("We are now in Q2\nThe value of C2 is: %d\n", c2);
+                cprintf("The value of C1 is: %d {Should be -1}\n", c1);
+                for(i=0;i<=c2;i++)
+                {
+                    if(q2[i]->state != RUNNABLE)
+                    {
+                        cprintf("Didn't find a runnable process in Q2\n");
+                        continue;
+                    }
+                    p=q2[i];
+                    proc = q2[i];
+                    proc->clicks++;
+                    switchuvm(p);
+                    p->state = RUNNING;
+                    swtch(&cpu->scheduler, proc->context);
+                    switchkvm();
+                    pstat_var.ticks[p->pid][1]=p->clicks;;
+                    if(p->clicks ==clkPerPrio[1])
                     {
                         cprintf("Process %d ran for %d clicks in Q2 and will be moved to Q3\n",p->pid, p->clicks);
                         /*copy proc to lower priority queue*/
@@ -441,17 +457,24 @@ scheduler (void)
                         q2[c2] = NULL;
                         proc->clicks = 0;
                         c2--;
+                        cprintf("c2 is now: %d\n", c2);
                         cprintf("Process successfully moved and is deleted from Q2\n");
                     }
                     proc = 0;
-								}
-    }
+                }
+            }
     if(c3!=-1)      //queue 3
     {
+        cprintf("We are now in Q3\nThe value of C3 is: %d\n",c3);
+        cprintf("The value of C2 is: %d {Should be -1}\n",c2);
+        cprintf("The value of C1 is: %d {Should be -1}\n",c1);
             for(i=0;i<=c3;i++)
                 {
                     if(q3[i]->state != RUNNABLE)
-                    continue;
+                    {
+                        cprintf("No runnable process in q3\n");
+                        continue;
+                    }
                     p=q3[i];
                     proc = q3[i];
                     proc->clicks++;
@@ -475,17 +498,25 @@ scheduler (void)
                             q3[c3] =NULL;
                             proc->clicks = 0;
                             c3--;
+                            cprintf("c3 is now: %d\n", c3);
                             cprintf("Process successfully moved and is deleted from Q3\n");
                         }
                         proc = 0;
-            }
+                }
     }
     if(c4!=-1)      // queue 4
     {
+        cprintf("We are now in Q4\n The value of c4 is: %d\n",c4);
+        cprintf("The value of C3 is: %d {Should be -1}\n",c3);
+        cprintf("The value of C2 is: %d {Should be -1}\n",c2);
+        cprintf("The value of C1 is: %d {Should be -1}\n",c1);
         for(i=0;i<=c4;i++)
             {
                 if(q4[i]->state != RUNNABLE)
-                continue;
+                {
+                    cprintf("No runnable process in q3\n");
+                    continue;
+                }
                 p=q4[i];
                 proc = q4[i];
                 proc->clicks++;
@@ -509,6 +540,7 @@ scheduler (void)
                     q4[c4] =NULL;
                     proc->clicks = 0;
                     c4--;
+                    cprintf("c4 is now: %d\n", c4);
                     cprintf("Process successfully moved and is deleted from Q4\n");
                 }
                 proc = 0;
@@ -516,6 +548,11 @@ scheduler (void)
     }
     if(c5!=-1)      // queue 5
     {
+        cprintf("We are now in Q5\nThe value of c5 is: %d\n",c5);
+        cprintf("The value of C4 is: %d {should be -1}\n",c4);
+        cprintf("The value of C3 is: %d {Should be -1}\n",c3);
+        cprintf("The value of C2 is: %d {Should be -1}\n",c2);
+        cprintf("The value of C1 is: %d {Should be -1}\n",c1);
         for(i=0;i<=c5;i++)
                 {
                     if(q5[i]->state != RUNNABLE)
@@ -543,6 +580,7 @@ scheduler (void)
                             q5[c5] =NULL;
                             proc->clicks = 0;
                             c5--;
+                            cprintf("The value of c5 is now: %d", c5);
                             cprintf("Process successfully moved and is deleted from Q5\n");
                         }
                         proc = 0;
@@ -550,6 +588,12 @@ scheduler (void)
     }
     if(c6!=-1)          // last queue
     {
+        cprintf("We are now in Q6\nThe value of c6 is: %d\n",c6);
+        cprintf("The value of c5 is: %d {should be -1}\n",c5);
+        cprintf("The value of C4 is: %d {should be -1}\n",c4);
+        cprintf("The value of C3 is: %d {Should be -1}\n",c3);
+        cprintf("The value of C2 is: %d {Should be -1}\n",c2);
+        cprintf("The value of C1 is: %d {Should be -1}\n",c1);
         for(i=0;i<=c6;i++)
                 {
                     if(q6[i]->state != RUNNABLE)
@@ -564,11 +608,11 @@ scheduler (void)
                     pstat_var.ticks[p->pid][5]=p->clicks;;
                     cprintf("Moving process %d to the end of its on queue\n");
                     /*move process to end of its own queue */
-                    if(p->clicks==2*clkPerPrio[5])
+                    if(p->clicks==clkPerPrio[5])
                     {
-                        cprintf("Process %d ran for %d clicks in Q6 and will be moved back to Q1/n",p->pid, p->clicks);
+                        cprintf("Process %d ran for %d clicks in Q6 and will be moved back to Q1\n",p->pid, p->clicks);
                         /*copy proc to highest priority queue*/
-                        c1++;
+                        /*c1++;
                         proc->priority=1;
                         pstat_var.priority[p->pid] = p->priority;;
                         q1[c1] = proc;
@@ -579,14 +623,15 @@ scheduler (void)
                         q6[c6] = NULL;
                         proc->clicks = 0;
                         c6--;
+                        cprintf("c6 is now: %d\n",c6);*/
                     }
                     proc = 0;
-
                 }
 
     }
-        release(&ptable.lock);
     }
+    release(&ptable.lock);
+        //}
 }
 
 
