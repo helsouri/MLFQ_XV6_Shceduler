@@ -24,6 +24,9 @@ int c4=-1;
 int c5=-1;
 int c6=-1;
 
+// time quantum for each queue
+int clkPerPrio[6] ={1,2,3,4,5,6};
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
