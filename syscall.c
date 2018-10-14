@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "x86.h"
 #include "syscall.h"
+#include "sysfunc.h"    // included new header fall for system calls
 #include "pstat.h"
 
 // User code makes a system call with INT T_SYSCALL.
@@ -78,27 +79,8 @@ argstr(int n, char **pp)
   return fetchstr(addr, pp);
 }
 
-extern int sys_chdir(void);
-extern int sys_close(void);
-extern int sys_dup(void);
-extern int sys_exec(void);
-extern int sys_exit(void);
-extern int sys_fork(void);
-extern int sys_fstat(void);
-extern int sys_getpid(void);
-extern int sys_kill(void);
-extern int sys_link(void);
-extern int sys_mkdir(void);
-extern int sys_mknod(void);
-extern int sys_open(void);
-extern int sys_pipe(void);
-extern int sys_read(void);
-extern int sys_sbrk(void);
-extern int sys_sleep(void);
-extern int sys_unlink(void);
-extern int sys_wait(void);
-extern int sys_write(void);
-extern int sys_uptime(void);
+// syscall function declarations moved to sysfunc.h so compiler
+// can catch definitions that don't match
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
