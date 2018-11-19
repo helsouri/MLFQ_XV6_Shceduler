@@ -10,7 +10,7 @@ struct cpu {
   volatile uint started;       // Has the CPU started?
   int ncli;                    // Depth of pushcli nesting.
   int intena;                  // Were interrupts enabled before pushcli?
-  
+
   // Cpu-local storage variables; see below
   struct cpu *cpu;
   struct proc *proc;           // The currently-running process.
@@ -70,7 +70,7 @@ struct proc {
   int ticks;                   // Ticks for each round of process
   int globalticks;		       // global counter for priotiy boost
   int jobcount[5];             // an array to count how many jobs are available in each queue
-  //bool newjob;             // to compare new job vs same job
+  int newjob;                 // to compare new job vs same job 0 or 1
 };
 
 // Process memory is laid out contiguously, low addresses first:

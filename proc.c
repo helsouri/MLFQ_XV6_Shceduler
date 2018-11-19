@@ -46,6 +46,7 @@ allocproc(void)
   p->globalticks=0;
     for(int i=0;i<6;i++)
         p->jobcount[i]=0;
+  p->newjob=1; //set to one meaning true
   release(&ptable.lock);
   return 0;
 
@@ -55,9 +56,10 @@ found:
   p->priority=1;
   p->ticks=0;
   p->globalticks=0;
-
+  p->newjob=1; //set to one meaning true
   for(int i=0;i<6;i++)
         p->jobcount[i]=0;
+
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -66,11 +68,11 @@ found:
     return 0;
   }
   sp = p->kstack + KSTACKSIZE;
-  
+
   // Leave room for trap frame.
   sp -= sizeof *p->tf;
   p->tf = (struct trapframe*)sp;
-  
+
   // Set up new context to start executing at forkret,
   // which returns to trapret.
   sp -= 4;
@@ -91,7 +93,7 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
-  
+
   p = allocproc();
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
@@ -119,7 +121,7 @@ int
 growproc(int n)
 {
   uint sz;
-  
+
   sz = proc->sz;
   if(n > 0){
     if((sz = allocuvm(proc->pgdir, sz, sz + n)) == 0)
@@ -166,14 +168,14 @@ fork(void)
   np->cwd = idup(proc->cwd);
 
   safestrcpy(np->name, proc->name, sizeof(proc->name));
- 
+
   pid = np->pid;
 
   // lock to force the compiler to emit the np->state write last.
   acquire(&ptable.lock);
   np->state = RUNNABLE;
   release(&ptable.lock);
-  
+
   return pid;
 }
 
@@ -296,14 +298,18 @@ scheduler(void)
       proc = p;
       if(p->priority==1)
         {
+            cprintf("\n\n\n ----Q%d----\n\n",p->priority);
+            p->newjob=1;
             switchuvm(p);
             p->state = RUNNING;
             p->ticks++; //increase ticks
-            if(p->pid!=nextpid)
-                p->jobcount[p->priority-1]++;
+            if(p->newjob==1)
+            {
+                  p->jobcount[p->priority-1]++;
+                  p->newjob=0;
+            }
             cprintf("There are now %d jobs in q%d\n",p->jobcount[p->priority-1],p->priority); //increase job count
             cprintf("Process [ %d ] is running in q%d for %d\n",p->pid, p->priority, p->ticks);
-            cprintf("-- The next pid is %d--\n",nextpid);
             p->globalticks++;
             if(p->ticks==1)
             {
@@ -312,10 +318,12 @@ scheduler(void)
                 p->priority++;//increment priority
                 cprintf("Process [%d] finished running in q%d and now has a priority of %d\n",p->pid, p->priority-1, p->priority);
                 p->ticks=0;//reset ticks
+                p->newjob=1;
             }
         }
         if(p->priority==2)
         {
+            cprintf("\n\n\n ----Q%d----\n\n",p->priority);
             for(int i=0;i<1;i++)
             {
                 cprintf("Checking q%d to find %d jobs\n",i+1, p->jobcount[i]);
@@ -323,30 +331,27 @@ scheduler(void)
                 {
                     p->priority=i+1;
                     p->ticks=0;
-                    break	;
                 }
             }
             switchuvm(p);
             p->state = RUNNING;
             p->ticks++; // increment ticks
-            if(p->pid!=nextpid)
+            if(p->newjob==1)
             {
-                int j=
-                 p->jobcount[p->priority-1]++; //increment job count in this queue
+                p->jobcount[p->priority-1]++;
+                p->newjob=0;
             }
-            
             cprintf("There are now %d jobs in q%d\n",p->jobcount[p->priority-1],p->priority);
             cprintf("Process [ %d ] is running in q%d for %d\n",p->pid, p->priority, p->ticks);
             p->globalticks++;
             if(p->ticks==2)
             {
-                p->jobcount[p->priority-1]--; //decrement job count before moving on
-                cprintf("There are now %d jobs in q%d \n",p->jobcount[p->priority-1],p->priority);
-                p->priority++;
-                p->jobcount[p->priority-1]--;
+                p->jobcount[p->priority-1]--; //decrease job count
+                cprintf("There are now %d jobs in q%d\n",p->jobcount[p->priority-1],p->priority);
+                p->priority++;//increment priority
                 cprintf("Process [%d] finished running in q%d and now has a priority of %d\n",p->pid, p->priority-1, p->priority);
-                p->ticks=0;
-
+                p->ticks=0;//reset ticks
+                p->newjob=1;
             }
             if(p->globalticks==12)
             {
@@ -358,6 +363,7 @@ scheduler(void)
         }
         if(p->priority==3)
         {
+            cprintf("\n\n\n ----Q%d----\n\n",p->priority);
             for(int i=0;i<p->priority-1;i++)
             {
                 cprintf("Checking q%d to find %d jobs\n",i+1, p->jobcount[i]);
@@ -370,18 +376,22 @@ scheduler(void)
             switchuvm(p);
             p->state = RUNNING;
             p->ticks++; //increase ticks
-            p->jobcount[p->priority-1]++; //increase job count
+            if(p->newjob==1)
+            {
+                p->jobcount[p->priority-1]++;
+                p->newjob=0;
+            }
             cprintf("There are now %d jobs in q%d\n",p->jobcount[p->priority-1],p->priority);
             cprintf("Process [ %d ] is running in q%d for %d\n",p->pid, p->priority, p->ticks);
             p->globalticks++;
             if(p->ticks==3)
                 {
-                    p->jobcount[p->priority-1]--; //decrement job count before moving on
+                    p->jobcount[p->priority-1]--; //decrease job count
                     cprintf("There are now %d jobs in q%d\n",p->jobcount[p->priority-1],p->priority);
-                    p->priority++;
-                    p->jobcount[p->priority-1]--;
+                    p->priority++;//increment priority
                     cprintf("Process [%d] finished running in q%d and now has a priority of %d\n",p->pid, p->priority-1, p->priority);
-                    p->ticks=0;
+                    p->ticks=0;//reset ticks
+                    p->newjob=1;
                 }
             if(p->globalticks==12)
             {
@@ -391,102 +401,118 @@ scheduler(void)
                 p->ticks=0;
             }
         }
-        
-            if(p->priority==4)
+        if(p->priority==4)
+        {
+            cprintf("\n\n\n ----Q%d----\n\n",p->priority);
+            for(int i=0;i<p->priority-1;i++)
             {
-                for(int i=0;i<p->priority-1;i++)
+                cprintf("Checking q%d to find %d jobs\n",i+1, p->jobcount[i]);
+                if(p->jobcount[i]!=0)
                 {
-                    cprintf("Checking q%d to find %d jobs\n",i+1, p->jobcount[i]);
-                    if(p->jobcount[i]!=0)
-                    {
-                        p->priority=i+1;
-                        p->ticks=0;
-                    }
-                }
-                switchuvm(p);
-                p->state = RUNNING;
-                p->ticks++;
-                p->jobcount[p->priority-1]++;
-                cprintf("Process [ %d ] is running in q%d for %d\n",p->pid, p->priority, p->ticks);
-                p->globalticks++;
-                if(p->ticks==4)
-                {
-                    p->jobcount[p->priority-1]--; //decrement job count before moving on
-                    cprintf("There are now %d jobs in q%d\n",p->jobcount[p->priority-1],p->priority);
-                    p->priority++;
-                    p->jobcount[p->priority-1]--;
-                    cprintf("Process [%d] finished running in q%d and now has a priority of %d\n",p->pid, p->priority-1, p->priority);
+                    p->priority=i+1;
                     p->ticks=0;
                 }
-                if(p->globalticks==12)
+            }
+            switchuvm(p);
+            p->state = RUNNING;
+            p->ticks++;
+            if(p->newjob==1)
+            {
+                p->jobcount[p->priority-1]++; //increase job count
+                p->newjob=0;
+            }
+            cprintf("Process [ %d ] is running in q%d for %d\n",p->pid, p->priority, p->ticks);
+            p->globalticks++;
+            if(p->ticks==4)
+            {
+                p->jobcount[p->priority-1]--; //decrease job count
+                cprintf("There are now %d jobs in q%d\n",p->jobcount[p->priority-1],p->priority);
+                p->priority++;//increment priority
+                cprintf("Process [%d] finished running in q%d and now has a priority of %d\n",p->pid, p->priority-1, p->priority);
+                p->ticks=0;//reset ticks
+                p->newjob=1;
+            }
+            if(p->globalticks==12)
+            {
+                cprintf("Process [ %d ] has exceeded priority boost limit and will be pushed back to Q1\n",p->pid);
+                p->globalticks=0;
+                p->priority=1;
+                p->ticks=0;
+            }
+        }
+        if(p->priority==5)
+        {
+            cprintf("\n\n\n ----Q%d----\n\n",p->priority);
+            for(int i=0;i<p->priority-1;i++)
+            {
+                cprintf("Checking q%d to find %d jobs\n",i+1, p->jobcount[i]);
+                if(p->jobcount[i]!=0)
                 {
-                    cprintf("Process [ %d ] has exceeded priority boost limit and will be pushed back to Q1\n",p->pid);
-                    p->globalticks=0;
                     p->priority=1;
                     p->ticks=0;
                 }
             }
-                if(p->priority==5)
+            switchuvm(p);
+            p->state = RUNNING;
+            p->ticks++;
+            if(p->newjob==1)
+            {
+                p->jobcount[p->priority-1]++; //increase job count
+                p->newjob=0;
+            }
+            cprintf("Process [ %d ] is running in q%d for %d\n",p->pid, p->priority, p->ticks);
+            p->globalticks++;
+            if(p->ticks==5)
+            {
+                p->jobcount[p->priority-1]--; //decrease job count
+                cprintf("There are now %d jobs in q%d\n",p->jobcount[p->priority-1],p->priority);
+                p->priority++;//increment priority
+                cprintf("Process [%d] finished running in q%d and now has a priority of %d\n",p->pid, p->priority-1, p->priority);
+                p->ticks=0;//reset ticks
+                p->newjob=1;
+            }
+            if(p->globalticks==12)
+            {
+                cprintf("Process [ %d ] has exceeded priority boost limit and will be pushed back to Q1\n",p->pid);
+                p->globalticks=0;
+                p->priority=1;
+                p->ticks=0;
+            }
+        }
+        if(p->priority==6)
+        {
+            cprintf("\n\n\n ----Q%d----\n\n",p->priority);
+            for(int i=0;i<p->priority-1;i++)
+            {
+                if(p->jobcount[i]!=0)
                 {
-                    for(int i=0;i<p->priority-1;i++)
-                    {
-                        if(p->jobcount[i]!=0)
-                        {
-                            p->priority=1;
-                            p->ticks=0;
-                        }
-                    }
-                    switchuvm(p);
-                    p->state = RUNNING;
-                    p->ticks++;
-                    p->jobcount[p->priority-1]++;
-                    cprintf("Process [ %d ] is running in q%d for %d\n",p->pid, p->priority, p->ticks);
-                    p->globalticks++;
-                    if(p->ticks==5)
-                    {
-                        p->priority++;
-                        cprintf("Process [%d] finished running in q%d and now has a priority of %d\n", p->pid, p->priority-1, p->priority);
-                        p->ticks=0;
-                        p->jobcount[p->priority-1]--;
-                    }
-                    if(p->globalticks==12)
-                    {
-                        cprintf("Process [ %d ] has exceeded priority boost limit and will be pushed back to Q1\n",p->pid);
-                        p->globalticks=0;
-                        p->priority=1;
-                        p->ticks=0;
-                    }
+                    p->priority=1;
+                    p->ticks=0;
                 }
-                if(p->priority==6)
-                {
-                    for(int i=0;i<p->priority-1;i++)
-                    {
-                        if(p->jobcount[i]!=0)
-                        {
-                            p->priority=1;
-                            p->ticks=0;
-                        }
-                    }
-                    switchuvm(p);
-                    p->state = RUNNING;
-                    p->ticks++;
-                    p->jobcount[p->priority-1]++;
-                    cprintf("Process [ %d ] is running in q%d for %d\n",p->pid, p->priority, p->ticks);
-                    p->globalticks++;
-                    if(p->globalticks==12)
-                    {
-                        cprintf("Process [ %d ] has exceeded priority boost limit and will be pushed back to Q1\n",p->pid);
-                        p->globalticks=0;
-                        p->priority=1;
-                        p->ticks=0;
-                    }
-                 }
-        
+            }
+            switchuvm(p);
+            p->state = RUNNING;
+            p->ticks++;
+            if(p->newjob==1)
+            {
+                p->jobcount[p->priority-1]++; //increase job count
+                p->newjob=0;
+            }
+            cprintf("Process [ %d ] is running in q%d for %d\n",p->pid, p->priority, p->ticks);
+            p->globalticks++;
+            if(p->globalticks==12)
+            {
+                cprintf("Process [ %d ] has exceeded priority boost limit and will be pushed back to Q1\n",p->pid);
+                p->globalticks=0;
+                p->priority=1;
+                p->ticks=0;
+            }
+        }
         swtch(&cpu->scheduler, proc->context);
         switchkvm();
         proc = 0;
 	}
-      
+
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       release(&ptable.lock);
@@ -534,13 +560,13 @@ forkret(void)
 
   if (first) {
     // Some initialization functions must be run in the context
-    // of a regular process (e.g., they call sleep), and thus cannot 
+    // of a regular process (e.g., they call sleep), and thus cannot
     // be run from main().
     first = 0;
     iinit(ROOTDEV);
     initlog(ROOTDEV);
   }
-  
+
   // Return to "caller", actually trapret (see allocproc).
 }
 
@@ -645,7 +671,7 @@ procdump(void)
   struct proc *p;
   char *state;
   uint pc[10];
-  
+
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state == UNUSED)
       continue;
@@ -662,5 +688,3 @@ procdump(void)
     cprintf("\n");
   }
 }
-        
-
