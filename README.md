@@ -24,4 +24,17 @@ except for any process in Q6;
 <br>• Q6 runs a Round-Robin with time quantum size as 600 ms. A pointer is needed to maintain the
 position of the running process. If a process is not done within the assigned quantum size, it
 remains in Q6 competing for the next round.
-<br>• The scheduler adopts priority boosting. Every 1200 ms, all jobs will be pushed to Q1.
+<br>• The scheduler adopts priority boosting. Every 1200 ms, all jobs will be pushed to Q1. <br>
+
+## 2 Testing
+For the testing, in the xv6 shell please run as follows:<br>
+$ spin 100000 &; spin 200000 &; spin 300000 &;<br>
+These three spins are executed in a single command line and run concurrently in the background. Please
+use cprintf() in the kernel to print on console the information for running processes as follows:
+Process spin 12 has consumed 100 ms in Q1
+Process spin 13 has consumed 100 ms in Q1
+Process spin 14 has consumed 100 ms in Q1
+Process spin 12 has consumed 100 ms in Q2
+...
+Basically, at each timer interrupt, you print out the running process information. The information of the
+process ID and the process name, which are stored in the proc struct. Focus only the spin processes.
