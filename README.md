@@ -8,12 +8,10 @@ The existing scheduler in xv6 is a Round-Robin (RR) scheduler. Upon each timer i
 handler switches to the kernel scheduler, which then selects the next available process to run. This
 scheduler, while simple, is too primitive to do anything interesting. In this project, you will be putting a
 new scheduler – the Multi-Level Feedback Queue (MLFQ) – into xv6. It has six queues: Qi
+i = 1, 2, . . . , 6 <br>
+with time quantum size i ∗ 100 ms for Qi<br>
 
-, i = 1, 2, . . . , 6
-
-with time quantum size i ∗ 100 ms for Qi
-
-. The detailed policy is described as follows:
+### The detailed policy is described as follows:
 
 • Any new process will be inserted to the end of Queue Q1;
 • The scheduler will always choose the front process in the highest-priority non-empty queue in the
