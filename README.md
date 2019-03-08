@@ -30,11 +30,11 @@ remains in Q6 competing for the next round.
 For the testing, in the xv6 shell please run as follows:<br>
 $ spin 100000 &; spin 200000 &; spin 300000 &;<br>
 These three spins are executed in a single command line and run concurrently in the background. Please
-use cprintf() in the kernel to print on console the information for running processes as follows:
-Process spin 12 has consumed 100 ms in Q1
-Process spin 13 has consumed 100 ms in Q1
-Process spin 14 has consumed 100 ms in Q1
-Process spin 12 has consumed 100 ms in Q2
+use cprintf() in the kernel to print on console the information for running processes as follows:<br>
+Process spin 12 has consumed 100 ms in Q1<br>
+Process spin 13 has consumed 100 ms in Q1<br>
+Process spin 14 has consumed 100 ms in Q1<br>
+Process spin 12 has consumed 100 ms in Q2<br>
 ...
 Basically, at each timer interrupt, you print out the running process information. The information of the
 process ID and the process name, which are stored in the proc struct. Focus only the spin processes.
